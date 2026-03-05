@@ -9116,8 +9116,8 @@
                     console.log('✅ Signed in:', userCredential.user.email);
                     
                     // Check if user is approved
-                    if (database) {
-                        database.ref('userApprovals/' + userCredential.user.uid).once('value')
+                    if (db) {
+                        db.ref('userApprovals/' + userCredential.user.uid).once('value')
                             .then((snapshot) => {
                                 const approval = snapshot.val();
                                 
@@ -9183,8 +9183,8 @@
                     console.log('✅ Account created:', userCredential.user.email);
                     
                     // Mark user as pending approval in Firebase Database
-                    if (database) {
-                        database.ref('userApprovals/' + userCredential.user.uid).set({
+                    if (db) {
+                        db.ref('userApprovals/' + userCredential.user.uid).set({
                             email: userCredential.user.email,
                             approved: false,
                             requestedAt: new Date().toISOString()
