@@ -2310,6 +2310,7 @@
         const FIREBASE_ENABLED = true;
         
         let db = null;
+        let auth = null; // Firebase Authentication
         let firebaseInitialized = false;
         let isLocalUpdate = false; // Flag to prevent Firebase listeners from interrupting local actions
         let firebaseSyncTimeout = null; // Debounce Firebase pushes
@@ -2322,8 +2323,24 @@
             try {
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.database();
+                auth = firebase.auth(); // Initialize auth
                 firebaseInitialized = true;
                 console.log('✅ Firebase Realtime Database connected - Multi-user mode active!');
+                console.log('✅ Firebase Authentication initialized');
+                
+                // Auth state listener - show/hide app based on login
+                auth.onAuthStateChanged((user) => {
+                    if (user) {
+                        console.log('✅ User logged in:', user.email);
+                        document.getElementById('loginScreen').style.display = 'none';
+                        document.getElementById('mainApp').style.display = 'block';
+                    } else {
+                        console.log('No user logged in');
+                        document.getElementById('loginScreen').style.display = 'flex';
+                        document.getElementById('mainApp').style.display = 'none';
+                    }
+                });
+                
                 setupFirebaseListeners();
                 updateConnectionStatus(true);
             } catch (error) {
