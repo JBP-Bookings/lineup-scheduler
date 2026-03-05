@@ -9114,7 +9114,32 @@
             auth.signInWithEmailAndPassword(email, password)
                 .then((userCredential) => {
                     console.log('✅ Signed in:', userCredential.user.email);
-                    errorDiv.style.display = 'none';
+                    
+                    // Check if user is approved
+                    if (database) {
+                        database.ref('userApprovals/' + userCredential.user.uid).once('value')
+                            .then((snapshot) => {
+                                const approval = snapshot.val();
+                                
+                                if (approval && approval.approved === false) {
+                                    // User not approved yet
+                                    errorDiv.textContent = '⏳ Your account is pending approval. Please wait for admin approval.';
+                                    errorDiv.style.display = 'block';
+                                    auth.signOut(); // Sign them out
+                                } else {
+                                    // User is approved or no approval system data
+                                    errorDiv.style.display = 'none';
+                                    // App will show automatically via auth state change
+                                }
+                            })
+                            .catch((error) => {
+                                console.error('Error checking approval:', error);
+                                // If error checking, allow them in
+                                errorDiv.style.display = 'none';
+                            });
+                    } else {
+                        errorDiv.style.display = 'none';
+                    }
                 })
                 .catch((error) => {
                     console.error('Sign in error:', error);
@@ -9156,8 +9181,26 @@
             auth.createUserWithEmailAndPassword(email, password)
                 .then((userCredential) => {
                     console.log('✅ Account created:', userCredential.user.email);
-                    errorDiv.style.display = 'none';
-                    alert('✅ Account created successfully! You are now signed in.');
+                    
+                    // Mark user as pending approval in Firebase Database
+                    if (database) {
+                        database.ref('userApprovals/' + userCredential.user.uid).set({
+                            email: userCredential.user.email,
+                            approved: false,
+                            requestedAt: new Date().toISOString()
+                        }).then(() => {
+                            console.log('User marked as pending approval');
+                            // Sign them out immediately
+                            auth.signOut().then(() => {
+                                errorDiv.style.display = 'none';
+                                alert('✅ Account created! Your account is pending approval. You will be notified when approved.');
+                                showSignInForm();
+                            });
+                        });
+                    } else {
+                        errorDiv.style.display = 'none';
+                        alert('✅ Account created successfully! You are now signed in.');
+                    }
                 })
                 .catch((error) => {
                     console.error('Sign up error:', error);
